@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f5f5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>记羽 | NoteShuttle</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 启动页 -->
+    <div id="splash-overlay" aria-hidden="true">
+        <canvas id="splash-canvas" aria-hidden="true"></canvas>
+        <div class="splash-content">
+            <div class="splash-logo">V</div>
+            <div class="splash-line"></div>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div class="container">
+        <header>
+            <div class="brand-mark" aria-hidden="true">V</div>
+            <h1>记羽</h1>
+            <p class="hero-subtitle">专注比赛，轻量记录。</p>
+            <div class="hero-meta">NoteShuttle</div>
+            <p class="hero-byline">试界 TryWorld</p>
+        </header>
+
+        <nav aria-label="主导航">
+            <ul class="nav-tabs">
+                <li class="nav-tab active" data-screen="scoreboard">记分板</li>
+                <li class="nav-tab" data-screen="grouping">智能分组</li>
+                <li class="nav-tab" data-screen="expense">费用计算</li>
+            </ul>
+        </nav>
+
+        <!-- Scoreboard Screen -->
+        <section id="scoreboard" class="screen active">
+            <div class="scoreboard">
+                <div class="score-header">
+                    <div class="match-timer" id="match-timer" aria-live="polite">00:00</div>
+                    <div id="game-info" class="game-info">
+                        <div class="set-score" id="set-score-display"></div>
+                        <div class="game-status" id="game-status"></div>
+                    </div>
+                </div>
+
+                <div class="teams">
+                    <div class="team">
+                        <div class="team-header">
+                            <div class="team-name">己方</div>
+                            <span class="serve-indicator" id="serve-a" aria-label="发球方"></span>
+                        </div>
+                        <div class="score" id="team-a-score" aria-live="polite">0</div>
+                        <div class="score-controls">
+                            <button class="btn btn-primary" onclick="updateScore('a', 1)" aria-label="己方加1分">+1</button>
+                            <button class="btn btn-danger" onclick="updateScore('a', -1)" aria-label="己方减1分">-1</button>
+                        </div>
+                    </div>
+                    <div class="team">
+                        <div class="team-header">
+                            <div class="team-name">对方</div>
+                            <span class="serve-indicator" id="serve-b" aria-label="发球方"></span>
+                        </div>
+                        <div class="score" id="team-b-score" aria-live="polite">0</div>
+                        <div class="score-controls">
+                            <button class="btn btn-primary" onclick="updateScore('b', 1)" aria-label="对方加1分">+1</button>
+                            <button class="btn btn-danger" onclick="updateScore('b', -1)" aria-label="对方减1分">-1</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-panel">
+                    <button id="reset-button" class="btn btn-secondary" onclick="resetScore()">重置比分</button>
+                    <button id="timer-button" class="btn btn-primary" onclick="toggleTimer()">开始比赛</button>
+                    <button id="end-match-button" class="btn btn-danger" onclick="showResultForm()">结束比赛</button>
+                </div>
+            </div>
+
+            <div id="result-form" class="result-card" style="display: none;">
+                <h2 class="result-title">比赛结果</h2>
+                <div style="display: flex; gap: 15px; margin-bottom: 20px; align-items: flex-end;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="team-a-names">己方选手（格式：老王/老张）</label>
+                        <input type="text" id="team-a-names" placeholder="例如：老王/老张">
+                    </div>
+                    <div style="padding-bottom: 24px; font-weight: 700; color: var(--ink-muted);">VS</div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="team-b-names">对方选手（格式：小李/小陈）</label>
+                        <input type="text" id="team-b-names" placeholder="例如：小李/小陈">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="generateResult()">生成赛果卡片</button>
+            </div>
+
+            <div id="result-card" class="result-card" style="display: none;">
+                <h2 class="result-title" id="result-title-text"></h2>
+                <div class="result-score" id="result-score-text"></div>
+                <div class="match-date" id="match-date"></div>
+                <button class="btn btn-primary" onclick="shareResult()">分享结果</button>
+                <button class="btn btn-secondary" onclick="generatePoster()" style="margin-top: 10px;">打开海报</button>
+            </div>
+        </section>
+
+        <!-- Grouping Screen -->
+        <section id="grouping" class="screen">
+            <div class="grouping-container">
+                <div class="card">
+                    <div class="form-group">
+                        <label for="players-list">输入参与人员（每行一个名字）</label>
+                        <textarea id="players-list" placeholder="张三&#10;李四&#10;王五&#10;赵六&#10;钱七&#10;孙八"></textarea>
+                    </div>
+                    <div class="control-panel">
+                        <button class="btn btn-primary" onclick="randomGroups()">随机分组</button>
+                        <button class="btn btn-secondary" onclick="clearGroups()">清空结果</button>
+                    </div>
+                </div>
+                <div class="group-results" id="group-results"></div>
+            </div>
+        </section>
+
+        <!-- Expense Tracker Screen -->
+        <section id="expense" class="screen">
+            <div class="expense-tracker">
+                <div class="card">
+                    <div class="form-group">
+                        <label for="expense-type">费用类型</label>
+                        <select id="expense-type">
+                            <option value="场地费">场地费</option>
+                            <option value="球费">球费</option>
+                            <option value="饮用水">饮用水</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="total-amount">总金额 (元)</label>
+                        <input type="number" id="total-amount" min="0" step="0.01" placeholder="输入总金额">
+                    </div>
+                    <div class="form-group">
+                        <label>参与人员</label>
+                        <textarea id="expense-players" placeholder="张三&#10;李四&#10;王五&#10;赵六&#10;钱七&#10;孙八"></textarea>
+                        <div class="participants-list" id="participants-list"></div>
+                        <button class="btn btn-primary" style="margin-top: 15px;" onclick="generateParticipants()">生成选择框</button>
+                    </div>
+                    <div class="control-panel">
+                        <button class="btn btn-primary" onclick="calculateExpense()">计算分摊</button>
+                        <button class="btn btn-danger" onclick="clearExpenseResult()">清空结果</button>
+                    </div>
+                </div>
+                <div class="card expense-result" id="expense-result" style="display: none;">
+                    <h2 class="result-title">费用分摊结果</h2>
+                    <div class="expense-summary" id="expense-summary"></div>
+                    <div class="expense-details" id="expense-details"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 海报层 -->
+    <canvas id="posterCanvas" width="1200" height="1600" style="display: none;"></canvas>
+    <div id="posterOverlay" style="display: none;"></div>
+
+    <div class="poster-actions" style="display: none;">
+        <button id="sharePosterBtn" onclick="savePoster()" class="btn btn-primary">分享海报</button>
+        <button id="closePosterBtn" onclick="closePoster()" class="btn btn-danger">关闭海报</button>
+    </div>
+
+    <script src="js/splash.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/scoreboard.js"></script>
+    <script src="js/grouping.js"></script>
+    <script src="js/expense.js"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const navTabs = document.querySelectorAll(".nav-tab");
+        navTabs.forEach(tab => {
+            tab.addEventListener("click", function() {
+                navTabs.forEach(t => t.classList.remove("active"));
+                this.classList.add("active");
+                document.querySelectorAll(".screen").forEach(screen => {
+                    screen.classList.remove("active");
+                });
+                const screenId = this.getAttribute("data-screen");
+                const target = document.getElementById(screenId);
+                if (target) target.classList.add("active");
+                if (typeof currentScreen !== 'undefined') currentScreen = screenId;
+            });
+        });
+
+        const canvas = document.getElementById("posterCanvas");
+        if (canvas) {
+            canvas.addEventListener("click", handleButtonClick);
+            canvas.addEventListener("mousemove", handleButtonHover);
+        }
+
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", function() {
+                navigator.serviceWorker.register("sw.js").then(function(registration) {
+                    console.log("ServiceWorker registration successful");
+                }, function(err) {
+                    console.log("ServiceWorker registration failed: ", err);
+                });
+            });
+        }
+    });
+    </script>
+</body>
+</html>
